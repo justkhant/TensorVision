@@ -16,6 +16,8 @@ import sys
 import scipy as scp
 import scipy.misc
 
+import data_loader as dataloader
+
 # configure logging
 if 'TV_IS_DEV' in os.environ and os.environ['TV_IS_DEV']:
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
@@ -25,7 +27,6 @@ else:
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
                         level=logging.INFO,
                         stream=sys.stdout)
-
 
 import time
 
@@ -367,6 +368,8 @@ def do_training(hypes):
 
     modules = utils.load_modules_from_hypes(hypes)
 
+    next_element = dataloader.create_dataset(hypes['data']['train_file'], hypes)
+    
     # Tell TensorFlow that the model will be built into the default Graph.
     with tf.Session() as sess:
 
@@ -374,23 +377,23 @@ def do_training(hypes):
         with tf.name_scope("Queues"):
             queue = modules['input'].create_queues(hypes, 'train')
 
-        tv_graph = core.build_training_graph(hypes, queue, modules)
+        tv_graph = core.build_training_graph(hypes, next_element, modules)
 
         # prepaire the tv session
         tv_sess = core.start_tv_session(hypes)
 
-        with tf.name_scope('Validation'):
-            tf.get_variable_scope().reuse_variables()
-            image_pl = tf.placeholder(tf.float32)
-            image = tf.expand_dims(image_pl, 0)
-            image.set_shape([1, None, None, 3])
-            inf_out = core.build_inference_graph(hypes, modules,
-                                                 image=image)
-            tv_graph['image_pl'] = image_pl
-            tv_graph['inf_out'] = inf_out
-
+#        with tf.name_scope('Validation'):
+#            tf.get_variable_scope().reuse_variables()
+#            image_pl = tf.placeholder(tf.float32)
+#            image = tf.expand_dims(image_pl, 0)
+#            image.set_shape([1, None, None, 3])
+#            inf_out = core.build_inference_graph(hypes, modules,
+#                                                 image=)
+#            tv_graph['image_pl'] = image_pl
+#            tv_graph['inf_out'] = inf_out
+#
         # Start the data load
-        modules['input'].start_enqueuing_threads(hypes, queue, 'train', sess)
+#        modules['input'].start_enqueuing_threads(hypes, queue, 'train', sess)
 
         # And then after everything is built, start the training loop.
         run_training(hypes, modules, tv_graph, tv_sess)
@@ -415,6 +418,8 @@ def continue_training(logdir):
     hypes = utils.load_hypes_from_logdir(logdir)
     modules = utils.load_modules_from_logdir(logdir)
 
+    next_element = dataloader.create_dataset(hypes['data']['train_file'], hypes)
+    
     # Tell TensorFlow that the model will be built into the default Graph.
     with tf.Session() as sess:
 
@@ -422,7 +427,7 @@ def continue_training(logdir):
         with tf.name_scope("Queues"):
             queue = modules['input'].create_queues(hypes, 'train')
 
-        tv_graph = core.build_training_graph(hypes, queue, modules)
+        tv_graph = core.build_training_graph(hypes, next_element, modules)
 
         # prepaire the tv session
         tv_sess = core.start_tv_session(hypes)
