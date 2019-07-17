@@ -10,6 +10,9 @@ import logging
 import os
 import sys
 
+sys.path.insert(1, "incl")
+sys.path.insert(1, 'inputs')
+
 # configure logging
 if 'TV_IS_DEV' in os.environ and os.environ['TV_IS_DEV']:
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',

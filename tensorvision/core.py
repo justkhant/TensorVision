@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -79,10 +80,10 @@ def build_training_graph(hypes, queue, modules):
 
     # Add Input Producers to the Graph
     with tf.name_scope("Inputs"):
-        image, labels = queue#data_input.inputs(hypes, queue, phase='train')
-
+       event_image, labels, original_img = queue #data_input.inputs(hypes, queue, phase='train')
+        
     # Run inference on the encoder network
-    logits = encoder.inference(hypes, image, train=True)
+    logits = encoder.inference(hypes, event_image, train=True)
 
     # Build decoder on top of the logits
     decoded_logits = objective.decoder(hypes, logits, train=True)
@@ -102,8 +103,11 @@ def build_training_graph(hypes, queue, modules):
     with tf.name_scope("Evaluation"):
         # Add the Op to compare the logits to the labels during evaluation.
         eval_list = objective.evaluation(
-            hypes, image, labels, decoded_logits, losses, global_step)
+            hypes, event_image, original_img, labels, decoded_logits, losses, global_step)
 
+#        labeled_image = tf.py_func(draw_rects_on_image, [original_img[0], corners[0]], [tf.float32]
+#        tf.summary.image("corner_boxes", labeled_image)
+        
         summary_op = tf.summary.merge_all()
 
     graph = {}
@@ -117,6 +121,15 @@ def build_training_graph(hypes, queue, modules):
 
     return graph
 
+def draw_rects_on_image(image, corners):
+    import cv2
+    for r in corners:
+        x1 = r[0]
+        x2 = r[1]
+        y1 = r[2]
+        y2 = r[3]
+        image = cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2) 
+    return image
 
 def build_inference_graph(hypes, modules, image):
     """Run one evaluation against the full epoch of data.

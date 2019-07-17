@@ -29,6 +29,10 @@ import time
 from shutil import copyfile
 
 from six.moves import xrange  # pylint: disable=redefined-builtin
+import sys
+
+sys.path.insert(1, 'incl')
+sys.path.insert(1, 'inputs')
 
 import tensorflow as tf
 
