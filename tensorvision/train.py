@@ -229,7 +229,10 @@ def run_training(hypes, modules, tv_graph, tv_sess, start_step=0):
 
     eval_names, eval_ops = zip(*tv_graph['eval_list'])
     # Run the training Step
+
     start_time = time.time()
+    return_timer = time.time()
+    
     for step in xrange(start_step, hypes['solver']['max_steps']):
 
         lr = solver.get_learning_rate(hypes, step)
@@ -281,40 +284,40 @@ def run_training(hypes, modules, tv_graph, tv_sess, start_step=0):
                                         summary_writer, step)
 
         # Do a evaluation and print the current state
-        if (step) % eval_iter == 0 and step > 0 or \
-           (step + 1) == hypes['solver']['max_steps']:
-            # write checkpoint to disk
-
-            logging.info('Running Evaluation Script.')
-            eval_dict, images = modules['eval'].evaluate(
-                hypes, sess, tv_graph['image_pl'], tv_graph['inf_out'])
-
-            _write_images_to_summary(images, summary_writer, step)
-            logging.info("Evaluation Finished. All results will be saved to:")
-            logging.info(hypes['dirs']['output_dir'])
-
-            if images is not None and len(images) > 0:
-
-                name = str(n % 10) + '_' + images[0][0]
-                image_file = os.path.join(hypes['dirs']['image_dir'], name)
-                scp.misc.imsave(image_file, images[0][1])
-                n = n + 1
-
-            logging.info('Raw Results:')
-            utils.print_eval_dict(eval_dict, prefix='(raw)   ')
-            _write_eval_dict_to_summary(eval_dict, 'Evaluation/raw',
-                                        summary_writer, step)
-
-            logging.info('Smooth Results:')
-            names, res = zip(*eval_dict)
-            smoothed = py_smoother.update_weights(res)
-            eval_dict = zip(names, smoothed)
-            utils.print_eval_dict(eval_dict, prefix='(smooth)')
-            _write_eval_dict_to_summary(eval_dict, 'Evaluation/smoothed',
-                                        summary_writer, step)
-
-            # Reset timer
-            start_time = time.time()
+        #if (step) % eval_iter == 0 and step > 0 or \
+        #   (step + 1) == hypes['solver']['max_steps']:
+        #    # write checkpoint to disk
+        #
+        #    logging.info('Running Evaluation Script.')
+        #    eval_dict, images = modules['eval'].evaluate(
+        #        hypes, sess, tv_graph['image_pl'], tv_graph['inf_out'])
+        #
+        #    _write_images_to_summary(images, summary_writer, step)
+        #    logging.info("Evaluation Finished. All results will be saved to:")
+        #    logging.info(hypes['dirs']['output_dir'])
+        #
+        #    if images is not None and len(images) > 0:
+        #
+        #        name = str(n % 10) + '_' + images[0][0]
+        #        image_file = os.path.join(hypes['dirs']['image_dir'], name)
+        #        scp.misc.imsave(image_file, images[0][1])
+        #        n = n + 1
+        #
+        #    logging.info('Raw Results:')
+        #    utils.print_eval_dict(eval_dict, prefix='(raw)   ')
+        #    _write_eval_dict_to_summary(eval_dict, 'Evaluation/raw',
+        #                                summary_writer, step)
+        #
+        #    logging.info('Smooth Results:')
+        #    names, res = zip(*eval_dict)
+        #    smoothed = py_smoother.update_weights(res)
+        #    eval_dict = zip(names, smoothed)
+        #    utils.print_eval_dict(eval_dict, prefix='(smooth)')
+        #    _write_eval_dict_to_summary(eval_dict, 'Evaluation/smoothed',
+        #                                summary_writer, step)
+        #
+        #    # Reset timer
+        #    start_time = time.time()
 
         # Save a checkpoint periodically.
         if (step) % save_iter == 0 and step > 0 or \
@@ -330,7 +333,10 @@ def run_training(hypes, modules, tv_graph, tv_sess, start_step=0):
            (step + 1) == hypes['solver']['max_steps']:
             _write_images_to_disk(hypes, images, step)
 
+        if (time.time() - return_timer >= 3550):
+            return 
 
+        
 def _print_training_status(hypes, step, loss_value, start_time, lr):
 
     info_str = utils.cfg.step_str
@@ -447,18 +453,18 @@ def continue_training(logdir):
             logging.warning("Starting Training with step 0.")
             cur_step = 0
 
-        with tf.name_scope('Validation'):
-            tf.get_variable_scope().reuse_variables()
-            image_pl = tf.placeholder(tf.float32)
-            image = tf.expand_dims(image_pl, 0)
-            image.set_shape([1, None, None, 3])
-            inf_out = core.build_inference_graph(hypes, modules,
-                                                 image=image)
-            tv_graph['image_pl'] = image_pl
-            tv_graph['inf_out'] = inf_out
+        #with tf.name_scope('Validation'):
+        #    tf.get_variable_scope().reuse_variables()
+        #   image_pl = tf.placeholder(tf.float32)
+        #    image = tf.expand_dims(image_pl, 0)
+        #    image.set_shape([1, None, None, 3])
+        #    inf_out = core.build_inference_graph(hypes, modules,
+        #                                         image=image)
+        #    tv_graph['image_pl'] = image_pl
+        #    tv_graph['inf_out'] = inf_out
 
-        # Start the data load
-        modules['input'].start_enqueuing_threads(hypes, queue, 'train', sess)
+        ## Start the data load
+        #modules['input'].start_enqueuing_threads(hypes, queue, 'train', sess)
 
         # And then after everything is built, start the training loop.
         run_training(hypes, modules, tv_graph, tv_sess, cur_step)
