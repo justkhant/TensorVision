@@ -16,7 +16,6 @@ import sys
 import scipy as scp
 import scipy.misc
 
-import data_loader as dataloader
 
 # configure logging
 if 'TV_IS_DEV' in os.environ and os.environ['TV_IS_DEV']:
@@ -40,6 +39,9 @@ import string
 
 import tensorvision.utils as utils
 import tensorvision.core as core
+
+import image_data_loader as image_dataloader
+import event_data_loader as event_dataloader
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS
@@ -374,7 +376,11 @@ def do_training(hypes):
 
     modules = utils.load_modules_from_hypes(hypes)
 
-    next_element = dataloader.create_dataset(hypes['data']['train_file'], hypes)
+    if (hypes["input_type"] == "EVENT"):
+        next_element = event_dataloader.create_dataset(hypes['data']['train_file'], hypes)    
+    else:
+        next_element = image_dataloader.create_dataset(hypes['data']['train_file'], hypes)
+        
     
     # Tell TensorFlow that the model will be built into the default Graph.
     with tf.Session() as sess:
@@ -424,7 +430,10 @@ def continue_training(logdir):
     hypes = utils.load_hypes_from_logdir(logdir)
     modules = utils.load_modules_from_logdir(logdir)
 
-    next_element = dataloader.create_dataset(hypes['data']['train_file'], hypes)
+    if (hypes["input_type"] == "EVENT"):
+        next_element = event_dataloader.create_dataset(hypes['data']['train_file'], hypes)    
+    else:
+        next_element = image_dataloader.create_dataset(hypes['data']['train_file'], hypes)
     
     # Tell TensorFlow that the model will be built into the default Graph.
     with tf.Session() as sess:
