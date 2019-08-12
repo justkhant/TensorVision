@@ -6,6 +6,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import json
 import logging
 import os
 import sys
@@ -37,7 +38,12 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string('logdir', None,
                     'Directory where logs are stored.')
 
+flags.DEFINE_string('hypes', 'hypes/kittiBox.json',
+                    'File storing model parameters')
 
+flags.DEFINE_string('input_type', 'COLOR',
+                    'Type of input training data') 
+                    
 def main(_):
     """Run main function for continue training."""
     if FLAGS.logdir is None:
@@ -46,6 +52,28 @@ def main(_):
         exit(1)
 
     utils.set_gpus_to_use()
+
+
+    with open(tf.app.flags.FLAGS.hypes, 'r') as f:
+        logging.info("f: %s", f)
+        hypes = json.load(f)
+
+    hypes["input_type"] = tf.app.flags.FLAGS.input_type
+    if (hypes["input_type"] == 'COLOR'):
+        hypes["input_channels"] = 3
+    elif (hypes["input_type"] == 'GRAYSCALE'):
+        hypes["input_channels"] = 1
+        hypes["dirs"]["output_dir"] = 'RUNS/grayscale_box'
+    elif (hypes["input_type"] == 'EVENT'):
+        hypes["input_channels"] = 9
+        hypes["input_file"] = '../inputs/event_data_loader.py'
+        hypes["data"]["train_file"] = 'data/event_train.txt'
+        hypes["dirs"]["output_dir"] = 'RUNS/events_box'
+        
+    else:
+        logging.error("data_type {} not supported.".format(hypes["input_type"]))
+        exit(1)
+
     utils.load_plugins()
 
     logging.info("Starting to analyze model in '%s'", FLAGS.logdir)
