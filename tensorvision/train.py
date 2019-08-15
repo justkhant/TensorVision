@@ -331,9 +331,9 @@ def run_training(hypes, modules, tv_graph, tv_sess, start_step=0):
             # Reset timer
             start_time = time.time()
 
-        if step % image_iter == 0 and step > 0 or \
-           (step + 1) == hypes['solver']['max_steps']:
-            _write_images_to_disk(hypes, images, step)
+        #if step % image_iter == 0 and step > 0 or \
+        #   (step + 1) == hypes['solver']['max_steps']:
+        #    _write_images_to_disk(hypes, images, step)
 
         if (time.time() - return_timer >= 3550):
             return 
